@@ -1,0 +1,24 @@
+#!/bin/bash
+
+service_name=${1%-*}
+component_name=${1##*-}
+
+labels_to_test=(
+  # Try to compute component name and serice name and find matching pods
+  "app.kubernetes.io/name=$service_name,app.kubernetes.io/component=$component_name"
+  # Try to find pods with a matching app.kubernetes.io/name label
+  "app.kubernetes.io/name=$1"
+  # Try to find pods with a matching app label
+  "app=$1"
+  # Try to find pods with a matching instance label
+  "app.kubernetes.io/instance=$1"
+)
+
+for label in "${labels_to_test[@]}"
+do
+  pods="$(kubectl get pods --ignore-not-found -l $label)"
+  if [ -n "$pods" ]; then
+    echo "$pods"
+    exit 0
+  fi
+done
